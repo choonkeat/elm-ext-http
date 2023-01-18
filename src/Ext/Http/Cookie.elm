@@ -1,9 +1,11 @@
-module Ext.Http.Cookie exposing
-    ( Attribute(..)
-    , Input
-    , get
-    , responseString
-    )
+module Ext.Http.Cookie exposing (Attribute(..), Input, get, responseString)
+
+{-|
+
+@docs Attribute, Input, get, responseString
+
+-}
+
 
 {-| See <https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies>
 
@@ -18,8 +20,6 @@ But in general, don't use `Expires` anymore,
     ]
 
 -}
-
-
 type Attribute
     = SameSite String
     | Path String

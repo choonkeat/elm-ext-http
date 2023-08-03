@@ -1,8 +1,8 @@
-module Ext.Http exposing (Error(..), TaskInput, errorString, identityResolver, jsonResolver)
+module Ext.Http exposing (Error(..), TaskInput, errorString, Data, identityResolver, jsonResolver)
 
 {-| This module extends the `Http` module with better error handling and more information in the success case.
 
-@docs Error, TaskInput, errorString, identityResolver, jsonResolver
+@docs Error, TaskInput, errorString, Data, identityResolver, jsonResolver
 
 -}
 
@@ -65,6 +65,22 @@ errorString err =
                 ++ Json.Decode.errorToString error
 
 
+{-| When http succeeds, you get a `Data` record with both the `Http.Metadata` and the `data` that was decoded from the response.
+
+    Http.task request
+        |> Task.andThen
+            (\{ meta, data } ->
+                -- do something with meta and/or data
+                -- like checking the status code
+            )
+
+-}
+type alias Data a =
+    { meta : Http.Metadata
+    , data : a
+    }
+
+
 {-| Resolver for `Http.task` that includes proper details in both the error case and metadata in the success case.
 
 Usually metadata is not needed in the success case, just add `Task.map .data` to your existing code
@@ -98,7 +114,7 @@ But when you need it, having the metadata available is very useful.
     ```
 
 -}
-jsonResolver : Json.Decode.Decoder a -> Http.Response String -> Result (Error String) { meta : Http.Metadata, data : a }
+jsonResolver : Json.Decode.Decoder a -> Http.Response String -> Result (Error String) (Data a)
 jsonResolver decoder resp =
     case resp of
         Http.BadUrl_ url ->
@@ -119,12 +135,12 @@ jsonResolver decoder resp =
                 |> Result.map (\data -> { meta = metadata, data = data })
 
 
-{-| A resolver that does process the response at all. It just returns the response as is, but with `Http.Metadata` included. And with error type as `Ext.Http.Error` instead of `Http.Error`.
+{-| Useful for non-json payloads like Bytes or String
 
-Useful for decoding non-json payloads like Bytes or String
+A resolver that does not process the response at all. It just returns the response as-is, but with `Http.Metadata` included. And with error type as `Ext.Http.Error` instead of `Http.Error`.
 
 -}
-identityResolver : Http.Response a -> Result (Error a) { meta : Http.Metadata, data : a }
+identityResolver : Http.Response a -> Result (Error a) (Data a)
 identityResolver resp =
     case resp of
         Http.BadUrl_ url ->
